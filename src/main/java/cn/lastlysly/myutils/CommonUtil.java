@@ -11,6 +11,7 @@ import java.io.File;
  * @author lastlySly
  * @GitHub https://github.com/lastlySly
  * @create 2018-06-26 16:39
+ * 该类为sringboot使用，尚未修改
  **/
 @Component
 public class CommonUtil {
