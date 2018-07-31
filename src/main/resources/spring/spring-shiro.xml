@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+		http://www.springframework.org/schema/mvc
+		http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-3.2.xsd
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx-3.2.xsd ">
+
+    <!--<import resource="spring-dao.xml"/>-->
+    <!--<import resource="spring-service.xml"/>-->
+    <!--自定义form认证过滤器-->
+    <bean id="formAuthenticationFilter" class="cn.lastlysly.myutils.shiro.CustomFormAuthenticationFilter">
+        <property name="usernameParam" value="username"/>
+        <property name="passwordParam" value="password"/>
+        <property name="rememberMeParam" value="rememberMe"/>
+    </bean>
+
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <property name="securityManager" ref="securityManager" />
+        <property name="loginUrl" value="index.html" /><!--登陆页URL-->
+        <property name="unauthorizedUrl" value="403.html" /><!--未认证URL-->
+
+        <property name="filters">
+            <map>
+                <entry key="authc" value-ref="formAuthenticationFilter"/>
+            </map>
+        </property>
+
+        <property name="filterChainDefinitions"><!--过滤器链-->
+            <!--anon 不需要认证  authc 需要认证  不需要验证的写在上面，因为从上往下执行，/* = authc会拦截所有，放最上面会全部要求验证-->
+            <value>
+                <!--/**/index.html = authc-->
+                /index.jsp = anon
+                /login.html = anon
+                /hello = anon
+                /subLogin = anon
+                /**/getaccountinfo = anon
+                /**/index.html = anon
+                /**/transfer = anon
+                /**/fenlilogin = anon
+                /* = authc
+            </value>
+        </property>
+    </bean>
+    <!--创建SecurityManager对象-->
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <property name="realm" ref="customRealm"/>
+
+        <!--shiro缓存管理器-->
+        <property name="cacheManager" ref="cacheManager"></property>
+        <!--shiro session管理器-->
+        <property name="sessionManager" ref="sessionManager"></property>
+    </bean>
+
+    <!--自定义realm-->
+    <bean class="cn.lastlysly.myutils.shiro.CustomRealm" id="customRealm">
+        <property name="credentialsMatcher" ref="credentialsMatcher"/>
+
+        <!--是否启用缓存授权-->
+        <property name="authorizationCachingEnabled" value="false"></property>
+    </bean>
+    <!--加密-->
+    <bean id="credentialsMatcher" class="org.apache.shiro.authc.credential.HashedCredentialsMatcher">
+        <property name="hashAlgorithmName" value="md5"/><!--加密类型-->
+        <property name="hashIterations" value="1024"/><!--加密次数-->
+        <property name="storedCredentialsHexEncoded" value="true"></property>
+    </bean>
+
+
+     <!--lifecycleBeanPostProcessor是负责生命周期的 , 初始化和销毁的类-->
+    <bean class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+    <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+        <property name="securityManager" ref="securityManager"/>
+    </bean>
+
+    <!--sessionDAO-->
+    <bean class="org.apache.shiro.session.mgt.eis.MemorySessionDAO" id="sessionDAO"></bean>
+
+    <!--sessionManager-->
+    <!--<bean class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager" id="sessionManager">-->
+        <!--<property name="sessionDAO" ref="sessionDAO"></property>-->
+        <!--<property name="sessionIdCookieEnabled" value="true"></property>-->
+        <!--<property name="sessionIdCookie" ref="simpleCookie"></property>-->
+    <!--</bean>-->
+    <!--重写了sessionManager-->
+    <bean class="cn.lastlysly.myutils.shiro.MySessionManager" id="sessionManager">
+        <property name="sessionDAO" ref="sessionDAO"></property>
+        <property name="sessionIdCookieEnabled" value="true"></property>
+        <property name="sessionIdCookie" ref="simpleCookie"></property>
+    </bean>
+
+    <!--配置cookie(防止多个项目session被覆盖问题)-->
+    <bean class="org.apache.shiro.web.servlet.SimpleCookie" id="simpleCookie">
+        <constructor-arg name="name" value="SHRIOSESSIONID"></constructor-arg>
+    </bean>
+
+    <!--配置shiro 缓存的一个管理器-->
+    <bean class="org.apache.shiro.cache.MemoryConstrainedCacheManager" id="cacheManager"></bean>
+</beans>
