@@ -35,7 +35,6 @@
             url:"http://localhost:8080/fenlimain",
             type:"POST",
             data:{"token":$.cookie("token")},
-            xhrFields:{withCredentials:true},
             // headers: {"token":$.cookie("token")},
             success:function (data) {
                 if (data.code == "1") {
